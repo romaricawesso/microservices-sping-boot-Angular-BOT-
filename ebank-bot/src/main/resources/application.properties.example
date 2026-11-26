@@ -23,3 +23,8 @@ spring.ai.mcp.client.enabled=false
 ebank.mcp.request-timeout=30s
 ebank.mcp.servers.customer-service=http://localhost:8086
 ebank.mcp.servers.ebank-service=http://localhost:8087
+
+# Bot Discord (optionnel) : token du Discord Developer Portal (Bot > Reset Token).
+# Activer aussi "Message Content Intent" (Bot > Privileged Gateway Intents).
+# Laisser cette ligne commentee pour demarrer sans bot Discord. Ne jamais commiter le vrai token.
+#discord.bot.token=VOTRE_TOKEN_DISCORD
