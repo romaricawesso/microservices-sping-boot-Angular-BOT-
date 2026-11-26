@@ -15,9 +15,11 @@ spring.ai.ollama.base-url=http://localhost:11434
 spring.ai.ollama.chat.model=qwen2.5:7b
 spring.ai.ollama.chat.temperature=0.3
 
-# Client MCP : se connecte aux serveurs MCP de customer-service et ebank-service
-# (endpoint /mcp par defaut) - ces services doivent etre demarres avant ebank-bot
-spring.ai.mcp.client.type=SYNC
-spring.ai.mcp.client.request-timeout=30s
-spring.ai.mcp.client.streamable-http.connections.customer-service.url=http://localhost:8086
-spring.ai.mcp.client.streamable-http.connections.ebank-service.url=http://localhost:8087
+# Client MCP : serveurs MCP de customer-service et ebank-service (endpoint /mcp)
+# Connexions gerees par McpServerConnections (a la demande) : le bot demarre meme si un service
+# est arrete, ignore les outils d'un service indisponible et se reconnecte quand il revient.
+# L'auto-configuration Spring AI est desactivee car elle exige tous les serveurs au demarrage.
+spring.ai.mcp.client.enabled=false
+ebank.mcp.request-timeout=30s
+ebank.mcp.servers.customer-service=http://localhost:8086
+ebank.mcp.servers.ebank-service=http://localhost:8087
