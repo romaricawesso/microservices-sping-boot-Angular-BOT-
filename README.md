@@ -29,7 +29,7 @@ Application bancaire construite en microservices avec **Spring Boot 4**, **Sprin
 | `gateway-service` | 8080 | Point d'entrée unique (Spring Cloud Gateway), routage `lb://` via Eureka |
 | `customer-service` | 8086 | Gestion des clients (JPA + H2 en mémoire) |
 | `ebank-service` | 8087 | Gestion des comptes bancaires, appelle `customer-service` via OpenFeign avec circuit breaker Resilience4j |
-| `ebank-bot` | 8088 | Chatbot bancaire (Spring AI, Ollama, mémoire de conversation) |
+| `ebank-bot` | 8088 | Chatbot bancaire (Spring AI, Ollama, mémoire de conversation), aussi disponible sur Discord |
 
 ## Prérequis
 
@@ -127,6 +127,63 @@ Les serveurs MCP se configurent dans `ebank-bot/src/main/resources/application.p
 ebank.mcp.servers.customer-service=http://localhost:8086
 ebank.mcp.servers.ebank-service=http://localhost:8087
 ```
+
+## Bot Discord
+
+`ebank-bot` peut aussi répondre sur Discord (bibliothèque [JDA](https://github.com/discord-jda/JDA)) : il transmet
+les messages au même agent IA que `/chat`, qui utilise les outils MCP pour répondre avec les vraies données.
+
+Le bot répond :
+- aux **messages privés** qu'on lui envoie ;
+- aux messages d'un salon qui le **mentionnent** : `@NomDuBot Quels sont les comptes du client 1 ?`
+
+### 1. Créer le bot
+
+1. Sur le [Discord Developer Portal](https://discord.com/developers/applications) : **New Application**, puis donner un nom.
+2. Onglet **Bot** :
+   - **Reset Token**, puis copier le token **immédiatement** (il n'est affiché qu'une fois) ;
+   - dans **Privileged Gateway Intents**, activer **Message Content Intent**, puis **Save Changes**.
+     Sans cet intent, le bot reçoit des messages vides.
+
+### 2. Inviter le bot sur un serveur
+
+Onglet **OAuth2 > URL Generator** :
+- scope : `bot` ;
+- permissions : **Send Messages** et **Read Message History**.
+
+Ouvrir l'URL générée, puis choisir le serveur.
+
+### 3. Configurer le token
+
+Dans `ebank-bot/src/main/resources/application.properties`, décommenter la ligne et mettre le token :
+
+```properties
+discord.bot.token=VOTRE_TOKEN_DISCORD
+```
+
+Ce fichier n'est pas versionné (`.gitignore`) : **ne jamais commiter le token**. Discord révoque automatiquement
+un token publié, par exemple sur GitHub. Si cela arrive, refaire **Reset Token**.
+
+Sans token (ligne commentée), `ebank-bot` démarre normalement, sans la partie Discord.
+
+### 4. Vérifier
+
+Au démarrage d'`ebank-bot`, les logs doivent afficher :
+
+```
+JDA          : Login Successful!
+DiscordBot   : Bot Discord demarre
+JDA          : Finished Loading!
+```
+
+| Message dans les logs | Cause et solution |
+|---|---|
+| `Bot Discord non demarre ... The provided token is invalid!` | Token révoqué, régénéré ou mal copié : refaire **Reset Token** et recopier. Le reste d'`ebank-bot` (`/chat`) continue de fonctionner. |
+| Le bot est en ligne mais ne répond pas | Message Content Intent désactivé, mention mal faite (choisir le bot dans la liste après `@`), ou bot non invité sur le serveur. |
+
+Comme pour `/chat`, comptez 20 s à 1 min par réponse avec `qwen2.5:7b`. Le bot affiche « est en train d'écrire… » pendant ce temps.
+
+> Tous les utilisateurs (Discord et `/chat`) partagent pour l'instant la même mémoire de conversation.
 
 ## Tester l'application
 
