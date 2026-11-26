@@ -1,0 +1,25 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: customer-service
+              uri: lb://customer-service
+              predicates:
+                - Path=/customers/**
+            - id: ebank-service
+              uri: lb://ebank-service
+              predicates:
+                - Path=/accounts/**
+
+# Enregistrement aupres d'Eureka (discovery-service)
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+  instance:
+    prefer-ip-address: true
