@@ -23,3 +23,9 @@ resilience4j.circuitbreaker.configs.default.permitted-number-of-calls-in-half-op
 resilience4j.circuitbreaker.configs.default.ignore-exceptions=feign.FeignException$NotFound
 # temps max d'un appel avant de passer au fallback (1s par defaut)
 resilience4j.timelimiter.configs.default.timeout-duration=3s
+
+# Serveur MCP (Streamable HTTP) : outils disponibles sur http://localhost:8087/mcp
+spring.ai.mcp.server.name=ebank-mcp-server
+spring.ai.mcp.server.version=1.0.0
+spring.ai.mcp.server.protocol=STREAMABLE
+spring.ai.mcp.server.type=SYNC

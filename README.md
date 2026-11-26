@@ -20,7 +20,7 @@ Application bancaire construite en microservices avec **Spring Boot 4**, **Sprin
 
 ┌──────────────────┐
 │    ebank-bot     │  Spring AI + Ollama – :8088
-└──────────────────┘
+└──────────────────┘  client MCP ──▶ customer-service /mcp + ebank-service /mcp
 ```
 
 | Module | Port | Rôle |
@@ -95,6 +95,24 @@ Via la gateway (`http://localhost:8080`) :
 ```
 GET http://localhost:8088/chat?query=Bonjour
 ```
+
+## MCP (Model Context Protocol)
+
+`customer-service` et `ebank-service` sont aussi des **serveurs MCP** (Spring AI, transport Streamable HTTP) :
+leurs opérations sont exposées comme outils pour les agents IA. `ebank-bot` est **client MCP** : le chatbot
+découvre ces outils au démarrage et les appelle pour répondre avec les vraies données de la banque.
+
+| Serveur | Endpoint | Outils |
+|---|---|---|
+| customer-service | `http://localhost:8086/mcp` | `getAllCustomers`, `getCustomerById`, `createCustomer` |
+| ebank-service | `http://localhost:8087/mcp` | `getAllBankAccounts`, `getBankAccountById`, `getBankAccountsByCustomerId`, `createBankAccount` |
+
+Les outils se limitent volontairement à la lecture et à la création (pas de modification ni de suppression par le LLM).
+`customer-service` et `ebank-service` doivent être démarrés **avant** `ebank-bot`, sinon le client MCP ne peut pas s'y connecter.
+
+Exemple : `GET http://localhost:8088/chat?query=Quels sont les comptes du client 1 ?`
+
+Les serveurs peuvent aussi être testés avec [MCP Inspector](https://github.com/modelcontextprotocol/inspector) (`npx @modelcontextprotocol/inspector`, transport *Streamable HTTP*).
 
 ## Résilience
 
