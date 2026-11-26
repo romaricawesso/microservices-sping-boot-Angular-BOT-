@@ -36,5 +36,7 @@ build/
 hs_err_pid*
 *.mdmp
 
-### Configuration locale (voir les fichiers application.properties.example) ###
+### Configuration locale (voir les fichiers *.example) ###
 **/src/main/resources/application.properties
+**/src/main/resources/application.yaml
+**/src/main/resources/application.yml

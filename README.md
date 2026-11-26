@@ -39,12 +39,14 @@ Application bancaire construite en microservices avec **Spring Boot 4**, **Sprin
 
 ## Configuration
 
-Les fichiers `application.properties` ne sont **pas versionnés**. Chaque module fournit un fichier `application.properties.example` à copier :
+Les fichiers `application.properties` et `application.yaml` ne sont **pas versionnés**. Chaque module fournit un fichier `.example` à copier :
 
 ```bash
 for d in discovery-service gateway-service customer-service ebank-service ebank-bot; do
   cp $d/src/main/resources/application.properties.example $d/src/main/resources/application.properties
 done
+# routes de la gateway
+cp gateway-service/src/main/resources/application.yaml.example gateway-service/src/main/resources/application.yaml
 ```
 
 Adaptez ensuite les valeurs si besoin (ports, URL Eureka, modèle Ollama…).
