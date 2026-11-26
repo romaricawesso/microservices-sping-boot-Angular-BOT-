@@ -35,3 +35,6 @@ build/
 ### JVM crash dumps ###
 hs_err_pid*
 *.mdmp
+
+### Configuration locale (voir les fichiers application.properties.example) ###
+**/src/main/resources/application.properties
