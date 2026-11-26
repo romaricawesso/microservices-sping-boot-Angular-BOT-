@@ -9,10 +9,10 @@ eureka.client.service-url.defaultZone=http://localhost:8761/eureka
 eureka.instance.prefer-ip-address=true
 spring.cloud.discovery.enabled=true
 
-# Ollama Cloud via l'Ollama local (connecte avec "ollama signin")
-# pour revenir au modele local : spring.ai.ollama.chat.model=llama3.1:8b
+# Modele local Ollama (installer avec : ollama pull qwen2.5:7b)
+# qwen2.5 gere bien l appel d outils MCP ; modele cloud possible : gpt-oss:120b-cloud (apres "ollama signin")
 spring.ai.ollama.base-url=http://localhost:11434
-spring.ai.ollama.chat.model=gpt-oss:120b-cloud
+spring.ai.ollama.chat.model=qwen2.5:7b
 spring.ai.ollama.chat.temperature=0.3
 
 # Client MCP : se connecte aux serveurs MCP de customer-service et ebank-service
