@@ -1,22 +1,79 @@
 <div class="p-3">
-  @if (accounts|async; as accountList){
-    <table class="table">
-      <thead>
+  <div class="card mb-4">
+    <div class="card-header">Nouveau compte</div>
+    <div class="card-body">
+      <form [formGroup]="accountForm" (ngSubmit)="saveAccount()">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label" for="customerId">Client</label>
+            <select id="customerId" class="form-select" formControlName="customerId"
+                    [class.is-invalid]="accountForm.controls.customerId.invalid && accountForm.controls.customerId.touched">
+              <option [ngValue]="null" disabled>Choisir un client</option>
+              @for (c of customers | async; track c.id){
+                <option [ngValue]="c.id">{{c.id}} - {{c.name}}</option>
+              }
+            </select>
+            <div class="invalid-feedback">Le client est obligatoire</div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="type">Type</label>
+            <select id="type" class="form-select" formControlName="type">
+              @for (t of accountTypes; track t){
+                <option [value]="t">{{t}}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="balance">Solde initial</label>
+            <input id="balance" type="number" min="0" step="0.01" class="form-control" formControlName="balance"
+                   [class.is-invalid]="accountForm.controls.balance.invalid && accountForm.controls.balance.touched">
+            <div class="invalid-feedback">Le solde doit etre positif ou nul</div>
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-plus-circle"></i> Ajouter
+            </button>
+          </div>
+        </div>
+      </form>
+      @if (formError()){
+        <div class="alert alert-danger mt-3 mb-0">{{formError()}}</div>
+      }
+      @if (formSuccess()){
+        <div class="alert alert-success mt-3 mb-0">{{formSuccess()}}</div>
+      }
+    </div>
+  </div>
+
+  @if (loadService.isLoading()){
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  }
+  @if (accounts|async; as state){
+    @if (state.status==RequestStatus.ERROR){
+      <div class="text-danger">
+        {{state.errorMessage}}
+      </div>
+    } @else if (state.status == RequestStatus.SUCCES){
+      <table class="table">
+        <thead>
         <tr>
           <th>ID</th><th>Balance</th><th>Date</th><th>Type</th><th>CustomerId</th>
         </tr>
-      </thead>
-      <tbody>
-        @for (acc of accountList;track acc.id){
-          <tr>
-            <td>{{acc.id}}</td>
-            <td>{{acc.balance}}</td>
-            <td>{{acc.createdAt | date:'dd/MM/yyyy HH:mm'}}</td>
-            <td>{{acc.type}}</td>
-            <td>{{acc.customerId}}</td>
-          </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          @for (acc of state.accounts;track acc.id){
+            <tr>
+              <td>{{acc.id}}</td>
+              <td>{{acc.balance}}</td>
+              <td>{{acc.createdAt | date:'dd/MM/yyyy HH:mm'}}</td>
+              <td>{{acc.type}}</td>
+              <td>{{acc.customerId}}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
   }
 </div>
