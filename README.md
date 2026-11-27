@@ -29,7 +29,7 @@ Application bancaire construite en microservices avec **Spring Boot 4**, **Sprin
 | `gateway-service` | 8080 | Point d'entrée unique (Spring Cloud Gateway), routage `lb://` via Eureka |
 | `customer-service` | 8086 | Gestion des clients (JPA + H2 en mémoire) |
 | `ebank-service` | 8087 | Gestion des comptes bancaires, appelle `customer-service` via OpenFeign avec circuit breaker Resilience4j |
-| `ebank-bot` | 8088 | Chatbot bancaire (Spring AI, Ollama, mémoire de conversation), aussi disponible sur Discord |
+| `ebank-bot` | 8088 | Chatbot bancaire (Spring AI, Ollama, mémoire de conversation), aussi disponible sur Discord et Telegram |
 
 ## Prérequis
 
@@ -102,6 +102,8 @@ Via la gateway (`http://localhost:8080`) :
 ```
 GET http://localhost:8088/chat?query=Bonjour
 ```
+
+Le même chatbot est accessible sur [Discord](#bot-discord) et [Telegram](#bot-telegram) une fois leur token configuré.
 
 ## MCP (Model Context Protocol)
 
@@ -183,7 +185,52 @@ JDA          : Finished Loading!
 
 Comme pour `/chat`, comptez 20 s à 1 min par réponse avec `qwen2.5:7b`. Le bot affiche « est en train d'écrire… » pendant ce temps.
 
-> Tous les utilisateurs (Discord et `/chat`) partagent pour l'instant la même mémoire de conversation.
+> Tous les utilisateurs (Discord, Telegram et `/chat`) partagent pour l'instant la même mémoire de conversation.
+
+## Bot Telegram
+
+`ebank-bot` peut aussi répondre sur Telegram (bibliothèque [TelegramBots](https://github.com/rubenlagus/TelegramBots),
+en long polling : aucune URL publique n'est nécessaire). Il utilise le même agent IA que `/chat` et Discord.
+
+Le bot répond :
+- à tous les **messages privés** ; `/start` affiche un message d'accueil ;
+- dans un **groupe**, aux messages qui le mentionnent (`@NomDuBot Quels sont les comptes du client 1 ?`)
+  ou qui répondent à un de ses messages. C'est le comportement par défaut de Telegram (*privacy mode*).
+
+### 1. Créer le bot
+
+1. Dans Telegram, ouvrir une conversation avec [@BotFather](https://t.me/BotFather).
+2. Envoyer `/newbot`, puis choisir un nom et un identifiant se terminant par `bot` (ex. `ebank_assistant_bot`).
+3. BotFather renvoie le **token** (forme `123456789:AAH...`).
+
+### 2. Configurer le token
+
+Dans `ebank-bot/src/main/resources/application.properties`, décommenter la ligne et mettre le token :
+
+```properties
+telegram.bot.token=VOTRE_TOKEN_TELEGRAM
+```
+
+Ce fichier n'est pas versionné (`.gitignore`) : **ne jamais commiter le token**. En cas de fuite, le révoquer
+avec `/revoke` auprès de BotFather.
+
+Sans token (ligne commentée), `ebank-bot` démarre normalement, sans la partie Telegram.
+
+### 3. Vérifier
+
+Au démarrage d'`ebank-bot`, les logs doivent afficher :
+
+```
+TelegramBot  : Bot Telegram demarre : @NomDuBot
+```
+
+| Message dans les logs | Cause et solution |
+|---|---|
+| `Bot Telegram non demarre ... [401] Unauthorized` | Token invalide ou révoqué : le recopier depuis BotFather. Le reste d'`ebank-bot` continue de fonctionner. |
+| `[409] Conflict: terminated by other getUpdates request` | Une autre instance d'`ebank-bot` utilise le même token : n'en garder qu'une seule. |
+
+Puis, dans Telegram, ouvrir la conversation avec le bot, envoyer `/start`, puis une question.
+Le bot affiche « est en train d'écrire… » pendant que le modèle répond (20 s à 1 min avec `qwen2.5:7b`).
 
 ## Tester l'application
 
@@ -202,6 +249,8 @@ http://localhost:8088/chat?query=Ouvre un compte SAVING de 1000 pour le client 2
 - Le bot garde l'historique de la conversation (« et son solde total ? » fonctionne). Pour repartir de zéro, redémarrer `ebank-bot`.
 - Un modèle 7B peut se tromper d'outil sur une question elliptique (« et ceux du client 2 ? ») :
   préférer des questions complètes (« Quels sont les comptes du client 2 ? »).
+- Les mêmes questions peuvent être posées sur Discord (en mentionnant le bot ou en message privé)
+  et sur Telegram (en message privé, après `/start`).
 
 ### 2. Vérifier que le bot dit vrai
 

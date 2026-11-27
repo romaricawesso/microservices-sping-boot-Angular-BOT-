@@ -28,3 +28,7 @@ ebank.mcp.servers.ebank-service=http://localhost:8087
 # Activer aussi "Message Content Intent" (Bot > Privileged Gateway Intents).
 # Laisser cette ligne commentee pour demarrer sans bot Discord. Ne jamais commiter le vrai token.
 #discord.bot.token=VOTRE_TOKEN_DISCORD
+
+# Bot Telegram (optionnel) : token donne par @BotFather (commande /newbot).
+# Laisser cette ligne commentee pour demarrer sans bot Telegram. Ne jamais commiter le vrai token.
+#telegram.bot.token=VOTRE_TOKEN_TELEGRAM
