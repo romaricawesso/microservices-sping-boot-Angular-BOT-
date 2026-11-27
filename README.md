@@ -74,7 +74,12 @@ Tableau de bord Eureka : http://localhost:8761 (tous les services doivent être 
 
 ## API
 
-Via la gateway (`http://localhost:8080`) :
+Via la gateway (`http://localhost:8080`). Chaque URL existe sous deux formes :
+- par les routes déclarées : `/customers/**`, `/accounts/**` ;
+- par le routage automatique Eureka (*discovery locator*) : `/CUSTOMER-SERVICE/customers/**`, `/EBANK-SERVICE/accounts/**`
+  (c'est la forme utilisée par le front Angular).
+
+La gateway accepte les appels de toutes les origines (CORS `*`, pratique en développement, à restreindre en production).
 
 ### Clients – `/customers`
 

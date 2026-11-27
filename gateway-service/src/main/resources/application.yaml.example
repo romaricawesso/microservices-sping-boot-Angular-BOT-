@@ -6,6 +6,10 @@ spring:
     gateway:
       server:
         webflux:
+          # Routage automatique par Eureka : /NOM-DU-SERVICE/** (ex. /EBANK-SERVICE/accounts)
+          discovery:
+            locator:
+              enabled: true
           routes:
             - id: customer-service
               uri: lb://customer-service
@@ -15,6 +19,17 @@ spring:
               uri: lb://ebank-service
               predicates:
                 - Path=/accounts/**
+          # CORS : autorise toutes les origines (pratique en developpement, a restreindre en production)
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowed-origins:
+                  - "*"
+                allowed-methods:
+                  - "*"
+                allowed-headers:
+                  - "*"
+                max-age: 3600
 
 # Enregistrement aupres d'Eureka (discovery-service)
 eureka:

@@ -27,6 +27,7 @@ import java.util.concurrent.Executors;
 // En prive il repond a tout ; dans un groupe, Telegram ne lui transmet par defaut que les messages
 // qui le mentionnent ou lui repondent (privacy mode).
 // Actif seulement si telegram.bot.token est renseigne (sinon l'application demarre sans lui).
+
 @Component
 @ConditionalOnProperty(prefix = "telegram.bot", name = "token")
 public class   TelegramBot implements LongPollingSingleThreadUpdateConsumer {
