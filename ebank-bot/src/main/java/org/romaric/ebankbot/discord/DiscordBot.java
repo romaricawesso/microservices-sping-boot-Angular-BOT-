@@ -78,10 +78,17 @@ public class DiscordBot extends ListenerAdapter {
         if (query.isEmpty()) {
             return;
         }
+        // une conversation par salon et par utilisateur
+        String conversationId = "discord-" + event.getChannel().getId() + "-" + event.getAuthor().getId();
+        if (query.equals("/reset")) {
+            ebankAIAgent.reset(conversationId);
+            message.reply("Conversation effacee.").queue();
+            return;
+        }
 
         event.getChannel().sendTyping().queue();
         executor.submit(() -> {
-            String answer = ebankAIAgent.chat(query);
+            String answer = ebankAIAgent.chat(conversationId, query);
             for (int start = 0; start < answer.length(); start += MAX_MESSAGE_LENGTH) {
                 message.reply(answer.substring(start, Math.min(answer.length(), start + MAX_MESSAGE_LENGTH))).queue();
             }

@@ -32,3 +32,9 @@ ebank.mcp.servers.ebank-service=http://localhost:8087
 # Bot Telegram (optionnel) : token donne par @BotFather (commande /newbot).
 # Laisser cette ligne commentee pour demarrer sans bot Telegram. Ne jamais commiter le vrai token.
 #telegram.bot.token=VOTRE_TOKEN_TELEGRAM
+
+# Memoire du bot : nombre de messages gardes par conversation (questions + reponses)
+ebank.chat.memory.max-messages=10
+
+# /chatStream : duree max d'une reponse en streaming (Tomcat coupe a 30 s par defaut)
+spring.mvc.async.request-timeout=5m

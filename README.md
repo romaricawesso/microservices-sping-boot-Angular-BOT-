@@ -104,9 +104,14 @@ La gateway accepte les appels de toutes les origines (CORS `*`, pratique en dév
 
 ### Chatbot
 
-```
-GET http://localhost:8088/chat?query=Bonjour
-```
+| Méthode | Endpoint | Description |
+|---|---|---|
+| GET | `/chat?query=...&conversationId=...` | Réponse complète, en texte brut |
+| GET | `/chatStream?query=...&conversationId=...` | Réponse en streaming (NDJSON : un `{"content":"..."}` par morceau) |
+| DELETE | `/chat?conversationId=...` | Efface l'historique de la conversation |
+
+Directement sur `http://localhost:8088`, ou via la gateway : `http://localhost:8080/EBANK-BOT/chat` (forme utilisée
+par le front Angular, la gateway ajoutant les en-têtes CORS).
 
 Le même chatbot est accessible sur [Discord](#bot-discord) et [Telegram](#bot-telegram) une fois leur token configuré.
 
@@ -190,7 +195,7 @@ JDA          : Finished Loading!
 
 Comme pour `/chat`, comptez 20 s à 1 min par réponse avec `qwen2.5:7b`. Le bot affiche « est en train d'écrire… » pendant ce temps.
 
-> Tous les utilisateurs (Discord, Telegram et `/chat`) partagent pour l'instant la même mémoire de conversation.
+> Chaque utilisateur a sa propre conversation, séparée par canal (Discord, Telegram, web) : voir [Mémoire du bot](#mémoire-du-bot).
 
 ## Bot Telegram
 
@@ -237,6 +242,21 @@ TelegramBot  : Bot Telegram demarre : @NomDuBot
 Puis, dans Telegram, ouvrir la conversation avec le bot, envoyer `/start`, puis une question.
 Le bot affiche « est en train d'écrire… » pendant que le modèle répond (20 s à 1 min avec `qwen2.5:7b`).
 
+## Mémoire du bot
+
+Le bot garde une conversation séparée par canal et par utilisateur : les historiques ne se mélangent pas.
+
+| Canal | Conversation | Effacer l'historique |
+|---|---|---|
+| Web (`/chat`) | paramètre `conversationId` (le front Angular en génère un par onglet ; sans lui : conversation `default`) | `DELETE /chat?conversationId=...` |
+| Discord | une par salon et par utilisateur | envoyer `/reset` (en mentionnant le bot dans un salon) |
+| Telegram | une par discussion et par utilisateur | envoyer `/reset` |
+
+L'historique est limité aux 10 derniers messages (`ebank.chat.memory.max-messages` dans `application.properties`).
+Il ne contient que les questions et les réponses, pas les résultats des outils : avec un historique trop long,
+le modèle a tendance à recopier d'anciennes réponses au lieu d'interroger les services. La mémoire est en RAM :
+elle est effacée au redémarrage d'`ebank-bot`.
+
 ## Tester l'application
 
 ### 1. Le chatbot (le plus simple)
@@ -251,7 +271,8 @@ http://localhost:8088/chat?query=Ouvre un compte SAVING de 1000 pour le client 2
 ```
 
 - Avec `qwen2.5:7b` en local, compter **20 s à 1 min** par réponse.
-- Le bot garde l'historique de la conversation (« et son solde total ? » fonctionne). Pour repartir de zéro, redémarrer `ebank-bot`.
+- Le bot garde l'historique de la conversation (« et son solde total ? » fonctionne). Pour séparer plusieurs
+  conversations, ajouter `&conversationId=...` ; pour repartir de zéro, voir [Mémoire du bot](#mémoire-du-bot).
 - Un modèle 7B peut se tromper d'outil sur une question elliptique (« et ceux du client 2 ? ») :
   préférer des questions complètes (« Quels sont les comptes du client 2 ? »).
 - Les mêmes questions peuvent être posées sur Discord (en mentionnant le bot ou en message privé)

@@ -38,6 +38,7 @@ public class   TelegramBot implements LongPollingSingleThreadUpdateConsumer {
     private static final String WELCOME = """
             Bonjour, je suis l'assistant de la banque E-Bank.
             Posez-moi une question, par exemple : "Quels sont les comptes du client 1 ?"
+            Envoyez /reset pour effacer la conversation.
             """;
 
     private final EbankAIAgent ebankAIAgent;
@@ -83,13 +84,20 @@ public class   TelegramBot implements LongPollingSingleThreadUpdateConsumer {
         if (query.isEmpty()) {
             return;
         }
+        // une conversation par discussion et par utilisateur (dans un groupe, chacun a la sienne)
+        String conversationId = "telegram-" + message.getChatId() + "-" + message.getFrom().getId();
         if (query.equals("/start")) {
             send(message, WELCOME);
             return;
         }
+        if (query.equals("/reset")) {
+            ebankAIAgent.reset(conversationId);
+            send(message, "Conversation effacee.");
+            return;
+        }
 
         sendTyping(message.getChatId());
-        executor.submit(() -> send(message, ebankAIAgent.chat(query)));
+        executor.submit(() -> send(message, ebankAIAgent.chat(conversationId, query)));
     }
 
     private void send(Message question, String answer) {

@@ -8,14 +8,12 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.mcp.SyncMcpToolCallbackProvider;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 
 @Service
 public class EbankAIAgent {
     private static final Logger log = LoggerFactory.getLogger(EbankAIAgent.class);
-
-    // Depuis Spring AI 2.1, la memoire n'a plus de conversation par defaut : l'identifiant doit etre fourni
-    private static final String DEFAULT_CONVERSATION_ID = "default";
 
     private static final String SYSTEM_PROMPT = """
             Tu es l'assistant de la banque E-Bank.
@@ -28,16 +26,20 @@ public class EbankAIAgent {
             """;
 
     private final ChatClient chatClient;
+    private final ChatMemory chatMemory;
     private final McpServerConnections mcpServers;
 
     public EbankAIAgent(ChatClient.Builder chatClient, ChatMemory chatMemory, McpServerConnections mcpServers) {
+        this.chatMemory = chatMemory;
         this.mcpServers = mcpServers;
         this.chatClient = chatClient
                 .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
                 .build();
     }
 
-    public String chat(String query) {
+    // conversationId : une conversation par canal et par utilisateur (ex. "telegram-123", "discord-456", "web-<uuid>"),
+    // pour que les historiques ne se melangent pas
+    public String chat(String conversationId, String query) {
         // a chaque question, on ne donne au modele que les outils des serveurs MCP joignables
         McpServerConnections.Status status = mcpServers.check();
         try {
@@ -45,7 +47,7 @@ public class EbankAIAgent {
                     .system(systemPrompt(status))
                     .user(query)
                     .toolCallbacks(new SyncMcpToolCallbackProvider(status.available()))
-                    .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, DEFAULT_CONVERSATION_ID))
+                    .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
                     .call()
                     .content();
         } catch (Exception e) {
@@ -53,6 +55,27 @@ public class EbankAIAgent {
             log.error("Erreur pendant la reponse du bot", e);
             return "Desole, un service de la banque est momentanement indisponible. Reessayez dans quelques instants.";
         }
+    }
+
+    // meme chose que chat(), mais la reponse arrive morceau par morceau, au fur et a mesure que le modele l'ecrit
+    public Flux<String> chatStream(String conversationId, String query) {
+        McpServerConnections.Status status = mcpServers.check();
+        return chatClient.prompt()
+                .system(systemPrompt(status))
+                .user(query)
+                .toolCallbacks(new SyncMcpToolCallbackProvider(status.available()))
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
+                .stream()
+                .content()
+                .onErrorResume(e -> {
+                    log.error("Erreur pendant la reponse du bot (stream)", e);
+                    return Flux.just("Desole, un service de la banque est momentanement indisponible. Reessayez dans quelques instants.");
+                });
+    }
+
+    // efface l'historique d'une conversation (commande /reset)
+    public void reset(String conversationId) {
+        chatMemory.clear(conversationId);
     }
 
     // Sans cette precision, le modele invente des donnees quand l'outil d'un service arrete est absent
